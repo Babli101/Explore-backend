@@ -2,7 +2,6 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-const bodyParser = require("body-parser");
 const nodemailer = require("nodemailer");
 require("dotenv").config();
 
@@ -10,16 +9,21 @@ const Lead = require("./models/Lead");
 
 const app = express();
 
-// middleware
+// ✅ middleware
 app.use(cors());
-app.use(bodyParser.json());
+app.use(express.json()); // bodyParser ki jagah ye use karo
 
-// MongoDB connect
+// ✅ Root route (Cannot GET / fix)
+app.get("/", (req, res) => {
+  res.send("Backend is running 🚀");
+});
+
+// ✅ MongoDB connect
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB Connected"))
-  .catch(err => console.log(err));
+  .catch(err => console.log("Mongo Error:", err));
 
-// 🔥 Mail setup
+// ✅ Mail setup
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -28,7 +32,7 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-// 🔥 API Route (ALL FORMS)
+// ✅ API Route (ALL FORMS)
 app.post("/api/form", async (req, res) => {
   try {
     const data = req.body;
@@ -57,11 +61,13 @@ app.post("/api/form", async (req, res) => {
 
   } catch (err) {
     console.log(err);
-    res.status(500).json({ success: false });
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// start server
-app.listen(5000, () => {
-  console.log("Server running on port 5000");
+// ✅ Dynamic PORT (Render ke liye important)
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+  console.log("Server running on port " + PORT);
 });
