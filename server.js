@@ -1,73 +1,31 @@
-// server.js
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-const nodemailer = require("nodemailer");
 require("dotenv").config();
 
-const Lead = require("./models/Lead");
+const formRoutes = require("./routes/routes"); // 👈 import routes
 
 const app = express();
 
-// ✅ middleware
+// middleware
 app.use(cors());
-app.use(express.json()); // bodyParser ki jagah ye use karo
+app.use(express.json());
 
-// ✅ Root route (Cannot GET / fix)
+// root route
 app.get("/", (req, res) => {
   res.send("Backend is running 🚀");
 });
 
-// ✅ MongoDB connect
+// MongoDB connect
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB Connected"))
   .catch(err => console.log("Mongo Error:", err));
 
-// ✅ Mail setup
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL,
-    pass: process.env.PASSWORD
-  }
-});
+// ✅ use routes
+app.use("/api", formRoutes);
 
-// ✅ API Route (ALL FORMS)
-app.post("/api/form", async (req, res) => {
-  try {
-    const data = req.body;
-
-    // save to DB
-    const newLead = new Lead(data);
-    await newLead.save();
-
-    // send email
-    await transporter.sendMail({
-      from: process.env.EMAIL,
-      to: process.env.EMAIL,
-      subject: `New Lead - ${data.formType}`,
-      html: `
-        <h3>New Form Submission</h3>
-        <p><b>Type:</b> ${data.formType}</p>
-        <p><b>Name:</b> ${data.name || "-"}</p>
-        <p><b>Email:</b> ${data.email || "-"}</p>
-        <p><b>Phone:</b> ${data.phone || "-"}</p>
-        <p><b>Project:</b> ${data.project || "-"}</p>
-        <p><b>Message:</b> ${data.message || "-"}</p>
-      `
-    });
-
-    res.json({ success: true });
-
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// ✅ Dynamic PORT (Render ke liye important)
+// PORT
 const PORT = process.env.PORT || 5000;
-
 app.listen(PORT, () => {
   console.log("Server running on port " + PORT);
 });
